@@ -149,6 +149,7 @@ export function KeyEditView({
   const mcpSelection = form.watch("mcp_servers_and_groups") as
     | { servers?: string[]; accessGroups?: string[]; toolsets?: string[] }
     | undefined;
+  const mcpScope = { teamId: form.watch("team_id") ?? null, userId: keyData.user_id };
   const mcpToolPermissions = form.watch("mcp_tool_permissions");
 
   useEffect(() => {
@@ -332,11 +333,11 @@ export function KeyEditView({
 
   const handleTeamChange = (setField: (value: string | null) => void, teamId: string | null) => {
     setField(teamId);
-    const selectedTeam = teams?.find((t) => t.team_id === teamId) || null;
-    if (selectedTeam?.organization_id) {
-      setSelectedOrganizationId(selectedTeam.organization_id);
-      form.setValue("organization_id", selectedTeam.organization_id);
-    }
+    form.setValue("mcp_servers_and_groups", { servers: [], accessGroups: [], toolsets: [] });
+    const organizationId = teams?.find((t) => t.team_id === teamId)?.organization_id;
+    if (!organizationId) return;
+    setSelectedOrganizationId(organizationId);
+    form.setValue("organization_id", organizationId);
   };
 
   const handleDisabledCallbacksChange = (internalValues: string[]) => {
@@ -761,6 +762,7 @@ export function KeyEditView({
                 onChange={onChange}
                 value={value as McpServersAndGroups | undefined}
                 accessToken={accessToken || ""}
+                {...mcpScope}
                 placeholder="Select MCP servers or access groups (optional)"
                 allowNoMcpServers
               />
@@ -770,6 +772,7 @@ export function KeyEditView({
           <div className="mb-6">
             <MCPToolPermissions
               accessToken={accessToken || ""}
+              {...mcpScope}
               selectedServers={mcpSelection?.servers || []}
               selectedAccessGroups={mcpSelection?.accessGroups || []}
               selectedToolsets={mcpSelection?.toolsets || []}
